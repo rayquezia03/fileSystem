@@ -4,49 +4,45 @@ import array
 
 console = Console()
 
-# Classe que representa o registro de um arquivo na tabela de diretório
+# Classe que representa um bloco (com dados e ponteiro)
+class Bloco:
+    def __init__(self, dado=None, proximo=None):
+        self.dado = dado
+        self.proximo = proximo
+
+# Classe que representa o registro de um arquivo
 class RegistroArquivo:
     def __init__(self, nome, tamanho, inicio):
-        self.nome = nome      # Nome do arquivo (máximo 4 caracteres)
-        self.tamanho = tamanho  # Tamanho do arquivo em blocos
-        self.inicio = inicio    # Endereço do primeiro bloco do arquivo no disco
+        self.nome = nome
+        self.tamanho = tamanho
+        self.inicio = inicio
 
 # Classe para simular a memória do disco
 class MemoriaDisco:
-    def __init__(self, capacidade_bits):
-        self.capacidade = capacidade_bits // 32  # 1024 bits / 32 bits/bloco = 32 blocos
-        
-        # Simulação da memória com o módulo 'array'
-        # 'u' para caracteres unicode (16 bits) e 'h' para short int (16 bits)
-        self.dados = array.array('u', ['\0'] * self.capacidade)
-        self.ponteiros = array.array('h', [0] * self.capacidade)
-        
-        # Variável para guardar o tamanho total da memória livre
-        self.memoria_livre_tamanho = self.capacidade
-        # Ponteiro para a primeira posição livre
-        self.lista_bloco_livre = 0
+    def __init__(self, capacidade):
+        self.capacidade = capacidade // 32
+        self.blocos = [Bloco() for _ in range(self.capacidade)]
+        self.memoria_livre = 0
+        self.lista_bloco_livre = None
 
-        # Inicializando a lista encadeada de blocos livres
+        # Inicializando a lista de blocos livres (encadeando os blocos)
         for i in range(self.capacidade - 1):
-            self.ponteiros[i] = i + 1
-        self.ponteiros[self.capacidade - 1] = -1  # -1 representa o ponteiro nulo
+            self.blocos[i].proximo = i + 1  # O próximo bloco do índice 'i' é 'i+1'
+        self.blocos[self.capacidade - 1].proximo = None  # O último bloco aponta para None
+        self.lista_bloco_livre = 0  # O primeiro bloco livre é o índice 0
 
     def alocar(self):
-        # Aloca um bloco se houver espaço livre
-        if self.lista_bloco_livre == -1:
+        # Alocar um bloco (se houver espaço livre)
+        if self.lista_bloco_livre is None:  # Não há mais blocos livres
             return None
-        
         primeiro_livre = self.lista_bloco_livre
-        self.lista_bloco_livre = self.ponteiros[primeiro_livre]
-        self.memoria_livre_tamanho -= 1
+        self.lista_bloco_livre = self.blocos[primeiro_livre].proximo  # Atualiza o ponteiro para o próximo bloco livre
         return primeiro_livre
 
     def desalocar(self, indice):
-        # Desaloca um bloco, tornando-o livre novamente
-        self.ponteiros[indice] = self.lista_bloco_livre
-        self.lista_bloco_livre = indice
-        self.dados[indice] = '\0' # Limpa o dado do bloco
-        self.memoria_livre_tamanho += 1
+        # Desalocar um bloco, tornando-o livre novamente
+        self.blocos[indice].proximo = self.lista_bloco_livre
+        self.lista_bloco_livre = indice  # Atualiza o ponteiro para o próximo bloco livre
 
     def exibir_setores(self):
         tabela = Table(title="Situação Atual do Disco")
@@ -55,37 +51,44 @@ class MemoriaDisco:
         tabela.add_column("Próximo", justify="center", style="magenta")
 
         for i in range(self.capacidade):
-            dado = self.dados[i] if self.dados[i] != '\0' else "-"
-            proximo = str(self.ponteiros[i]) if self.ponteiros[i] != -1 else "-"
+            dado = self.blocos[i].dado if self.blocos[i].dado is not None else "-"
+            proximo = str(self.blocos[i].proximo) if self.blocos[i].proximo is not None else "-"
             tabela.add_row(str(i), dado, proximo)
+
         console.print(tabela)
 
     def exibir_blocos_livres(self):
         indices_livres = []
         bloco_atual = self.lista_bloco_livre
-        while bloco_atual != -1:
+        while bloco_atual is not None:
             indices_livres.append(str(bloco_atual))
-            bloco_atual = self.ponteiros[bloco_atual]
+            bloco_atual = self.blocos[bloco_atual].proximo
         console.print(f"[bold yellow]Índices de Blocos Livres:[/bold yellow] {' -> '.join(indices_livres)}")
+
+    def exibir_bits(self):
+        bits_str = ' '.join(map(str, self.blocos))
+        console.print(f"[bold yellow]Mapa de Bits:[/bold yellow] {bits_str}")
 
 # Classe principal que simula o sistema de arquivos
 class SistemaDeArquivos:
     def __init__(self, tamanho_total):
         self.disco = MemoriaDisco(tamanho_total)
-        self.arquivos = []  # Simula a tabela de diretório
+        self.arquivos = []
 
     def criar(self, nome, dados):
-        # Valida o nome do arquivo (máximo 4 caracteres)
+        # Verifica se o nome é válido (máximo 4 caracteres)
         if len(nome) > 4:
             console.print(f"[red]Nome do arquivo '{nome}' excede o limite de 4 caracteres![/red]")
             return
+
+        # Verifica se o arquivo já existe
         if any(a.nome == nome for a in self.arquivos):
             console.print(f"[red]O arquivo '{nome}' já existe![/red]")
             return
 
-        # Verifica se o espaço livre total é suficiente
-        if self.disco.memoria_livre_tamanho < len(dados):
-            console.print(f"[bold red]Memória insuficiente para criar o arquivo '{nome}'![/bold red]")
+        espaco_disponivel = self.disco.capacidade - sum(1 for b in self.disco.blocos if b.dado != None)
+        if espaco_disponivel < len(dados):
+            console.print("[bold red]Espaço insuficiente no disco![/bold red]")
             return
 
         inicio = self.disco.alocar()
@@ -95,13 +98,9 @@ class SistemaDeArquivos:
 
         atual = inicio
         for i, caractere in enumerate(dados):
-            self.disco.dados[atual] = caractere # Armazena um caractere por bloco
-            if i < len(dados) - 1:
-                proximo = self.disco.alocar()
-                self.disco.ponteiros[atual] = proximo
-                atual = proximo
-            else:
-                self.disco.ponteiros[atual] = -1 # Último bloco aponta para nulo
+            proximo = self.disco.alocar() if i < len(dados) - 1 else None
+            self.disco.blocos[atual] = Bloco(caractere, proximo)
+            atual = proximo
 
         novo_arquivo = RegistroArquivo(nome, len(dados), inicio)
         self.arquivos.append(novo_arquivo)
@@ -115,9 +114,11 @@ class SistemaDeArquivos:
 
         endereco = arq.inicio
         conteudo = ""
-        while endereco != -1:
-            conteudo += self.disco.dados[endereco]
-            endereco = self.disco.ponteiros[endereco]
+        while endereco is not None:
+            no = self.disco.blocos[endereco]
+            conteudo += no.dado
+            endereco = no.proximo
+
         console.print(f"[bold blue]Conteúdo de '{nome}':[/bold blue] {conteudo}")
 
     def excluir(self, nome):
@@ -128,18 +129,19 @@ class SistemaDeArquivos:
 
         blocos_a_excluir = []
         endereco = arq.inicio
-        while endereco != -1:
+        while endereco is not None:
             blocos_a_excluir.append(endereco)
-            endereco = self.disco.ponteiros[endereco]
+            endereco = self.disco.blocos[endereco].proximo
 
         for bloco_idx in reversed(blocos_a_excluir):
+            self.disco.blocos[bloco_idx] = Bloco()
             self.disco.desalocar(bloco_idx)
 
         self.arquivos.remove(arq)
         console.print(f"[bold cyan]Arquivo '{nome}' excluído com sucesso![/bold cyan]")
 
     def listar(self):
-        tabela = Table(title="Tabela de Diretório", show_lines=True)
+        tabela = Table(title="Tabela de Arquivos", show_lines=True)
         tabela.add_column("Nome", justify="center", style="cyan")
         tabela.add_column("Tamanho", justify="center", style="green")
         tabela.add_column("Início", justify="center", style="magenta")
@@ -150,32 +152,16 @@ class SistemaDeArquivos:
 
 '''
 sistema = SistemaDeArquivos(1024)
-
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
-sistema.disco.exibir_setores()
-
 sistema.criar("arq1", "PERNAMBUCO")
-sistema.criar("arq2", "SAO PAULO")
+sistema.criar("arq2", "são paulo")
 sistema.criar("arq3", "ALAGOAS")
-
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
-sistema.disco.exibir_setores()
-
 sistema.criar("arq4", "SANTA CATARINA")
-
-sistema.excluir("arq2")
-
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
+# sistema.listar()
+# sistema.disco.exibir_bits()
 sistema.disco.exibir_setores()
-
-sistema.criar("arq4", "SANTA CATARINA")
-
 sistema.excluir("arq2")
-
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
+# sistema.listar()
+sistema.disco.exibir_setores()
+sistema.criar("arq5", "SANTA CATARINA")
 sistema.disco.exibir_setores()
 '''
