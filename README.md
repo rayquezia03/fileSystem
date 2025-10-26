@@ -6,7 +6,7 @@
 
 **Professor:** Tércio de Morais
 
-**Repositório:** [https://github.com/rayquezia03/fileManagement-SO](https://github.com/rayquezia03/fileManagement-SO)
+**Repositório:** [https://github.com/rayquezia03/fileSystem](https://github.com/rayquezia03/fileSystem)
 
 ---
 
