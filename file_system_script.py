@@ -11,7 +11,6 @@ class RegistroArquivo:
         self.tamanho = tamanho  # Tamanho do arquivo em blocos
         self.inicio = inicio    # Endereço do primeiro bloco do arquivo no disco
 
-# Classe para simular a memória do disco
 class MemoriaDisco:
     def __init__(self, capacidade_bits):
         self.capacidade = 1024 // 32  # 1024 bits / 32 bits/bloco = 32 blocos
@@ -67,8 +66,6 @@ class MemoriaDisco:
             indices_livres.append(str(bloco_atual))
             bloco_atual = self.ponteiros[bloco_atual]
         console.print(f"[bold yellow]Índices de Blocos Livres:[/bold yellow] {' -> '.join(indices_livres)}")
-
-# Classe principal que simula o sistema de arquivos
 class SistemaDeArquivos:
     def __init__(self, tamanho_total):
         self.disco = MemoriaDisco(tamanho_total)
