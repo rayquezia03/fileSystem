@@ -14,7 +14,7 @@ class RegistroArquivo:
 # Classe para simular a memória do disco
 class MemoriaDisco:
     def __init__(self, capacidade_bits):
-        self.capacidade = capacidade_bits // 32  # 1024 bits / 32 bits/bloco = 32 blocos
+        self.capacidade = 1024 // 32  # 1024 bits / 32 bits/bloco = 32 blocos
         
         # Simulação da memória com o módulo 'array'
         # 'u' para caracteres unicode (16 bits) e 'h' para short int (16 bits)
@@ -126,15 +126,12 @@ class SistemaDeArquivos:
             console.print(f"[red]Arquivo '{nome}' não encontrado.[/red]")
             return
 
-        # Coleta todos os índices de bloco do arquivo
         blocos_a_excluir = []
         endereco = arq.inicio
         while endereco != -1:
             blocos_a_excluir.append(endereco)
             endereco = self.disco.ponteiros[endereco]
 
-        # Desaloca os blocos na ORDEM INVERSA para que entrem
-        # na lista de livres na ordem correta (FIFO), corrigindo a alocação "de trás para frente"
         for bloco_idx in reversed(blocos_a_excluir):
             self.disco.desalocar(bloco_idx)
 
@@ -151,42 +148,18 @@ class SistemaDeArquivos:
             tabela.add_row(a.nome, str(a.tamanho), str(a.inicio))
         console.print(tabela)
 
-# --- Demonstração seguindo o exemplo do PDF ---
+'''
 sistema = SistemaDeArquivos(1024)
-
-console.print("\n[bold]--- ESTADO INICIAL DO DISCO ---[/bold]")
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
-sistema.disco.exibir_setores()
-
-console.print("\n[bold]1. Criando arquivos iniciais...[/bold]")
 sistema.criar("arq1", "PERNAMBUCO")
-sistema.criar("arq2", "SAO PAULO")
+sistema.criar("arq2", "são paulo")
 sistema.criar("arq3", "ALAGOAS")
-
-console.print("\n[bold]--- DISCO APÓS CRIAÇÃO DE 3 ARQUIVOS ---[/bold]")
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
-sistema.disco.exibir_setores()
-
-console.print("\n[bold]2. Tentativa de criar arquivo maior que o espaço disponível...[/bold]")
-# Tentativa deve gerar erro por falta de espaço
 sistema.criar("arq4", "SANTA CATARINA")
-
-console.print("\n[bold]3. Excluindo um arquivo para liberar espaço...[/bold]")
-# Remoção do arquivo "Sao Paulo"
+# sistema.listar()
+# sistema.disco.exibir_bits()
+sistema.disco.exibir_setores()
 sistema.excluir("arq2")
-
-console.print("\n[bold]--- DISCO APÓS EXCLUIR 'arq2' ---[/bold]")
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
+# sistema.listar()
 sistema.disco.exibir_setores()
-
-console.print("\n[bold]4. Nova tentativa de criar o arquivo...[/bold]")
-# Nova tentativa de inserir "Santa Catarina" deve ser bem-sucedida
-sistema.criar("arq4", "SANTA CATARINA")
-
-console.print("\n[bold]--- ESTADO FINAL DO DISCO ---[/bold]")
-sistema.listar()
-sistema.disco.exibir_blocos_livres()
+sistema.criar("arq5", "SANTA CATARINA")
 sistema.disco.exibir_setores()
+'''

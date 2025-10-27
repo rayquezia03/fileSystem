@@ -16,11 +16,11 @@ def menu_principal():
 
     print()
 
-    # Pergunta o tamanho da memória do sistema
-    memoria_disponivel = int(input('Quantos bytes tem a memória do sistema? '))
+    console.print('[bold yellow]Sistema inicializado com 1024 bits (32 blocos) de capacidade.[/bold yellow]')
+    sleep(1)
     print()
 
-    sistema = SistemaDeArquivos(memoria_disponivel)
+    sistema = SistemaDeArquivos(1024)
 
     while True:
         sleep(2)
