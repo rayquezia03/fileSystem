@@ -31,9 +31,14 @@ def menu_principal():
         print("3. Excluir Arquivo")
         print("4. Exibir Estado do Disco")
         print("5. Exibir Tabela de Arquivos")
-        print("6. Sair do Sistema")
+        print("6. Exibir Blocos Livres") 
+        print("7. Sair do Sistema") 
         
-        opcao_escolhida = int(input("Digite a opção desejada: "))
+        try:
+            opcao_escolhida = int(input("Digite a opção desejada: "))
+        except ValueError:
+            console.print("[bold red]Opção inválida, digite um número.[/bold red]")
+            continue
 
         if opcao_escolhida == 1:
             nome_arquivo = input('Informe o nome do arquivo a ser criado: ')
@@ -53,8 +58,11 @@ def menu_principal():
         
         elif opcao_escolhida == 5:
             sistema.listar()
-        
+
         elif opcao_escolhida == 6:
+            sistema.disco.exibir_blocos_livres()
+        
+        elif opcao_escolhida == 7:
             console.print("[bold]Fechando o programa...[/bold]")
             sleep(1)
             break
