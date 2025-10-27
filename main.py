@@ -16,11 +16,11 @@ def menu_principal():
 
     print()
 
-    memoria_disponivel = 1024
-    console.print(f'[bold green]Sistema inicializado com {memoria_disponivel} bits de memória.[/bold green]')
+    console.print('[bold yellow]Sistema inicializado com 1024 bits (32 blocos) de capacidade.[/bold yellow]')
+    sleep(1)
     print()
 
-    sistema = SistemaDeArquivos(memoria_disponivel)
+    sistema = SistemaDeArquivos(1024)
 
     while True:
         sleep(2)
@@ -30,9 +30,8 @@ def menu_principal():
         print("2. Visualizar Arquivo")
         print("3. Excluir Arquivo")
         print("4. Exibir Estado do Disco")
-        print("5. Exibir Blocos Livres")
-        print("6. Exibir Tabela de Arquivos")
-        print("7. Sair do Sistema")
+        print("5. Exibir Tabela de Arquivos")
+        print("6. Sair do Sistema")
         
         opcao_escolhida = int(input("Digite a opção desejada: "))
 
@@ -53,12 +52,9 @@ def menu_principal():
             sistema.disco.exibir_setores()
         
         elif opcao_escolhida == 5:
-            sistema.disco.exibir_blocos_livres()
-        
-        elif opcao_escolhida == 6:
             sistema.listar()
         
-        elif opcao_escolhida == 7:
+        elif opcao_escolhida == 6:
             console.print("[bold]Fechando o programa...[/bold]")
             sleep(1)
             break
